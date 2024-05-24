@@ -69,39 +69,10 @@ fn test_leds(leds: &mut [hal::gpio::Pin<hal::gpio::Output<hal::gpio::PushPull>>]
     }
 }
 
-// fn setup leds(gpiob: Parts) {
-// fn setup_leds(gpio: ) {
-//     // Consume the gpio's and set the used pins to the appropriate values
-//     // let usr_button =gpioa.
-//     let (led0, led1, led2, led3, led4, led5, led6, led7) = cortex_m::interrupt::free(move |cs| {
-//         (
-//             gpiob.pb0.into_push_pull_output(cs),
-//             gpiob.pb1.into_push_pull_output(cs),
-//             gpiob.pb2.into_push_pull_output(cs),
-//             gpiob.pb3.into_push_pull_output(cs),
-//             gpiob.pb4.into_push_pull_output(cs),
-//             gpiob.pb5.into_push_pull_output(cs),
-//             gpiob.pb6.into_push_pull_output(cs),
-//             gpiob.pb7.into_push_pull_output(cs),
-//         )
-//     });
-
-//     let mut led_array = [
-//         led0.downgrade(),
-//         led1.downgrade(),
-//         led2.downgrade(),
-//         led3.downgrade(),
-//         led4.downgrade(),
-//         led5.downgrade(),
-//         led6.downgrade(),
-//         led7.downgrade(),
-//     ];
-
-//     led_array
-// }
 #[entry]
 fn main() -> ! {
     if let (Some(dp), Some(cp)) = (Peripherals::take(), c_m_Peripherals::take()) {
+        // surround the block in an interrupt free env
         cortex_m::interrupt::free(move |cs| {
             // Enable clock for SYSCFG
             let rcc = dp.RCC;
@@ -113,8 +84,6 @@ fn main() -> ! {
             // setup the gpio
             let gpioa = dp.GPIOA.split(&mut rcc);
             let gpiob = dp.GPIOB.split(&mut rcc);
-            let syscfg = dp.SYSCFG;
-            let exti = dp.EXTI;
 
             // Initialise delay provider
             let delay = Delay::new(cp.SYST, &rcc);
@@ -126,23 +95,23 @@ fn main() -> ! {
              *  PA5 is a potentiometer to control the speed/position of the stepper motor
              */
             // setup button on PA0
-            // let mut button = cortex_m::interrupt(|cs| gpioa.pa0.into_pull_up_input(cs));
+            let (usr_btn, pot) = (
+                gpioa.pa0.into_pull_down_input(cs),
+                gpioa.pa5.into_analog(cs),
+            );
 
             // setup a binary counter that we will display on the LED's connected to PB0PB7
             let mut step_counter = 0;
-            let (led0, led1, led2, led3, led4, led5, led6, led7) =
-                cortex_m::interrupt::free(move |cs| {
-                    (
-                        gpiob.pb0.into_push_pull_output(cs),
-                        gpiob.pb1.into_push_pull_output(cs),
-                        gpiob.pb2.into_push_pull_output(cs),
-                        gpiob.pb3.into_push_pull_output(cs),
-                        gpiob.pb4.into_push_pull_output(cs),
-                        gpiob.pb5.into_push_pull_output(cs),
-                        gpiob.pb6.into_push_pull_output(cs),
-                        gpiob.pb7.into_push_pull_output(cs),
-                    )
-                });
+            let (led0, led1, led2, led3, led4, led5, led6, led7) = (
+                gpiob.pb0.into_push_pull_output(cs),
+                gpiob.pb1.into_push_pull_output(cs),
+                gpiob.pb2.into_push_pull_output(cs),
+                gpiob.pb3.into_push_pull_output(cs),
+                gpiob.pb4.into_push_pull_output(cs),
+                gpiob.pb5.into_push_pull_output(cs),
+                gpiob.pb6.into_push_pull_output(cs),
+                gpiob.pb7.into_push_pull_output(cs),
+            );
 
             let mut led_array = [
                 led0.downgrade(),
@@ -157,43 +126,27 @@ fn main() -> ! {
 
             test_leds(&mut led_array);
 
-            // Below is for if we're using interrupts
+            loop {
+                /*
+                 * check if button is pressed
+                 * if yes
+                 *      increment counter
+                 *      display on leds
+                 *      sleep for value of potentiometer
+                 */
+                let some(btn_state) = usr_btn.is_high().unwrap();
+                if (btn_state) {
+                    step_counter += 1;
 
-            // Enable external interrupt for PB1
-            syscfg.exticr1.modify(|_, w| unsafe { w.exti1().bits(1) });
+                    // display counter on leds
 
-            // Set interrupt request mask for line 1
-            exti.imr.modify(|_, w| w.mr1().set_bit());
-
-            // Set interrupt rising trigger for line 1
-            exti.rtsr.modify(|_, w| w.tr1().set_bit());
-
-            // Move control over LED and DELAY and EXTI into global mutexes
-            // *DELAY.borrow(cs).borrow_mut() = Some(delay);
-            // *INT.borrow(cs).borrow_mut() = Some(exti);
-            // *LEDs.borrow(cs).borrow_mut() = Some(led_array);
-
-            // // Enable EXTI IRQ, set prio 1 and clear any pending IRQs
-            // let mut nvic = cp.NVIC;
-            // unsafe {
-            //     nvic.set_priority(Interrupt::EXTI0_1, 1);
-            //     cortex_m::peripheral::NVIC::unmask(Interrupt::EXTI0_1);
-            // }
-            // cortex_m::peripheral::NVIC::unpend(Interrupt::EXTI0_1);
+                    // sleep
+                }
+            }
         });
     };
 
     loop {
         continue;
     }
-}
-
-/**
- * Interrupt handler for the user button press
- */
-fn button_handler() {
-    todo!("Button handler");
-    // read the button state
-    // let button_state = gpioa.pa0.read();
-    // println!("Button state: {:?}", button_state);
 }
