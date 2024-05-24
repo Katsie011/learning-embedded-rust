@@ -9,50 +9,11 @@ use cortex_m_rt::entry;
 
 use stm32f0xx_hal as hal;
 
-// use crate::hal::{
-//     delay::Delay,
-//     gpio::*,
-//     pac::{interrupt, Interrupt, Peripherals, EXTI},
-//     prelude::*,
-// };
-// use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};
-use crate::hal::{
-    delay::Delay,
-    gpio::*,
-    pac::{interrupt, Interrupt, Peripherals, EXTI},
-    prelude::*,
-};
+use crate::hal::{delay::Delay, gpio::*, pac::Peripherals, prelude::*};
 
-use cortex_m::{interrupt::Mutex, peripheral::Peripherals as c_m_Peripherals};
-
-use core::{cell::RefCell, ops::DerefMut};
-
-// If we're using interrupts
-// // Make our LED globally available
-// static LEDs: Mutex<RefCell<Option<[hal::gpio::Pin<hal::gpio::Output<hal::gpio::PushPull>>]>>> =
-//     Mutex::new(RefCell::new(None));
-
-// // Make our delay provider globally available
-// static DELAY: Mutex<RefCell<Option<Delay>>> = Mutex::new(RefCell::new(None));
-
-// // Make external interrupt registers globally available
-// static INT: Mutex<RefCell<Option<EXTI>>> = Mutex::new(RefCell::new(None));
+use cortex_m::peripheral::Peripherals as c_m_Peripherals;
 
 fn flash_led(led: &mut hal::gpio::Pin<hal::gpio::Output<hal::gpio::PushPull>>, sleep_ms: u16) {
-    // Running with interrupts
-    // // Enter critical section
-    // cortex_m::interrupt::free(|cs| {
-    //     // Obtain Mutex protected resources
-    //     if let &mut Some(ref mut delay) = DELAY.borrow(cs).borrow_mut().deref_mut() {
-    //         // Turn on LED
-    //         led.set_high().ok();
-    //         // Wait a bit
-    //         delay.delay_ms(sleep_ms);
-    //         // Turn off LED
-    //         led.set_low().ok();
-    //     }
-    // });
-
     // Running without interrupts:
     // Turn on LED
     led.set_high().ok();
