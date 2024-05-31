@@ -2,7 +2,8 @@
 #![no_main]
 #![no_std]
 
-use core::{borrow::BorrowMut, default};
+// use core::{borrow::BorrowMut, default};
+use core::{borrow::BorrowMut, convert::TryInto};
 
 // Halt on panic
 use panic_halt as _;
@@ -124,8 +125,8 @@ fn main() -> ! {
                 led6.downgrade(),
                 led7.downgrade(),
             ];
-            let num_leds = led_array.len();
-            let max_displayable_num = (2 ^ num_leds as i32) - 1;
+            // let num_leds = led_array.len();
+            // let max_displayable_num = (2 ^ num_leds as i32) - 1;
 
             test_leds(&mut led_array);
             let mut delay = Delay::new(cp.SYST, &rcc);
@@ -140,46 +141,52 @@ fn main() -> ! {
                  *      display on leds
                  *      sleep for value of potentiometer
                  */
-                let btn_state = match usr_btn.is_high() {
-                    Ok(btn) => {
-                        hprintln!("Button state is: {btn}").unwrap();
-                        btn
-                    }
-                    Err(err) => panic!("Cannot retrieve the state of the button, reason:\n{}", err),
-                };
+                // let btn_state = match usr_btn.is_high() {
+                //     Ok(btn) => {
+                //         hprintln!("Button state is: {btn}").unwrap();
+                //         btn
+                //     }
+                //     Err(err) => panic!("Cannot retrieve the state of the button, reason:\n{}", err),
+                // };
+                let btn_state: bool = usr_btn.is_high().unwrap();
+                if btn_state {
+                    hprintln!("Button is High").unwrap();
+                } else {
+                    hprintln!("Button is low!").unwrap();
+                }
 
                 let pot_val: u16 = adc.read(&mut pot).unwrap();
 
-                if btn_state {
-                    // if step_counter >= max_displayable_num {
-                    //     hprintln!(
-                    //         "Step counter is {} which overflows {}",
-                    //         step_counter,
-                    //         max_displayable_num
-                    //     )
-                    //     .unwrap();
+                // if btn_state {
+                // if step_counter >= max_displayable_num {
+                //     hprintln!(
+                //         "Step counter is {} which overflows {}",
+                //         step_counter,
+                //         max_displayable_num
+                //     )
+                //     .unwrap();
 
-                    //     step_counter = 0;
-                    // } else {
-                    //     step_counter = step_counter + 1;
-                    // }
+                //     step_counter = 0;
+                // } else {
+                //     step_counter = step_counter + 1;
+                // }
 
-                    // TODO: overflow the step counter if it's too large
-                    // display counter on leds
-                    // write_to_leds(step_counter, &mut led_array);
+                // TODO: overflow the step counter if it's too large
+                // display counter on leds
+                // write_to_leds(step_counter, &mut led_array);
 
-                    //scale down value from adc into a u8
-                    let led_val = (pot_val * 2 ^ 8 / 2 ^ 16) as u8;
-                    hprintln!("Scaling down pot val from {pot_val} to {led_val}").unwrap();
-                    write_to_leds(led_val, &mut led_array);
+                //scale down value from adc into a u8
+                let led_val = (pot_val * 2 ^ 8 / 2 ^ 16) as u8;
+                hprintln!("Scaling down pot val from {pot_val} to {led_val}").unwrap();
+                write_to_leds(led_val, &mut led_array);
 
-                    // 8MHz crystal --> sleep for 1 second is 8_000_000
-                    // sleep
-                    hprintln!("Sleeping for 0.5s").unwrap();
+                // 8MHz crystal --> sleep for 1 second is 8_000_000
+                // sleep
+                hprintln!("Sleeping for 0.5s").unwrap();
 
-                    delay.delay_ms(500_u16);
-                }
+                delay.delay_ms(500_u16);
             }
+            // }
         });
     };
 

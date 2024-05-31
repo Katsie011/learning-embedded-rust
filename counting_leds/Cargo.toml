@@ -2,7 +2,7 @@
 authors = ["michaelkatsoulis"]
 edition = "2018"
 readme = "README.md"
-name = "stepper_motors"
+name = "counting_leds"
 version = "0.1.0"
 
 [dependencies]
@@ -27,7 +27,7 @@ stm32f0xx-hal = { version = "0.18", features = ["stm32f051"] }
 
 # this lets you use `cargo fix`!
 [[bin]]
-name = "stepper_motors"
+name = "counting_leds"
 test = false
 bench = false
 
